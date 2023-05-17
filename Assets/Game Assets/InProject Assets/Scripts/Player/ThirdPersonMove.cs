@@ -40,13 +40,13 @@ public class ThirdPersonMove : MonoBehaviour
 
         if (controller.isGrounded)
         {
-            // Получаем направление движения от ввода игрока
+            
             Vector3 inputDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 
-            // Переводим направление движения в локальные координаты персонажа
+          
             inputDirection = transform.TransformDirection(inputDirection);
 
-            // Устанавливаем направление движения
+           
             moveDirection = inputDirection * speed;
 
             if (Input.GetButton("Jump"))
@@ -58,17 +58,17 @@ public class ThirdPersonMove : MonoBehaviour
 
 
 
-        // Получаем вектор направления от персонажа до камеры
+       
         Vector3 cameraDirection = mainCamera.forward;
         cameraDirection.y = 0f;
 
-        // Устанавливаем направление движения в направление камеры
+        
         moveDirection = Vector3.ClampMagnitude(cameraDirection * Input.GetAxis("Vertical") + mainCamera.right * Input.GetAxis("Horizontal"), 1f) * speed;
 
-        // Получаем вращение камеры по оси Y
+       
         float cameraRotationY = mainCamera.rotation.eulerAngles.y;
 
-        // Устанавливаем только вращение по оси Y для персонажа
+       
         transform.rotation = Quaternion.Euler(0f, cameraRotationY, 0f);
 
         moveDirection.y -= gravity * Time.deltaTime;
@@ -108,10 +108,10 @@ public class ThirdPersonMove : MonoBehaviour
             noOfClicks = 0;
         }
 
-        //cooldown time
+    
         if (Time.time > nextFireTime)
         {
-            // Check for mouse input
+            
             if (Input.GetMouseButtonDown(0))
             {
                 OnClick();
@@ -126,7 +126,7 @@ public class ThirdPersonMove : MonoBehaviour
     public void OnClick()
     {   
         Collider collider = GameObject.Find("Sword_1").GetComponent<Collider>();
-        //so it looks at how many clicks have been made and if one animation has finished playing starts another one.
+       
         lastClickedTime = Time.time;
         noOfClicks++; 
         
