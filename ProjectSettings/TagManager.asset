@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Terrain
   - Enemy
+  - QuestGiver
+  - QuestItem
   layers:
   - Default
   - TransparentFX
@@ -13,8 +15,8 @@ TagManager:
   - Terrain
   - Water
   - UI
-  - 
-  - 
+  - Player
+  - Obstacle
   - 
   - 
   - 

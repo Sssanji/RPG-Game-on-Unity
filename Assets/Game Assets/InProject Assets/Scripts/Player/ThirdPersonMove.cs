@@ -16,25 +16,59 @@ public class ThirdPersonMove : MonoBehaviour
     private Vector3 moveDirection = Vector3.zero;
     public Transform mainCamera;
     public Animator animator;
+    public Camera PlayerCamera;
+    public Camera IntroCamera;
     public float cooldownTime = 2f;
     private float nextFireTime = 0f;
     public static int noOfClicks = 0;
     float lastClickedTime = 0;
     float maxComboDelay = 1;
-
+    public GameObject InventoryScreen; 
+    private bool isInvetoryVisible = false;
+    public GameObject QuestUI;
+    private bool isQuestUIVisible = false;
 
 
     void Start()
     {
-
-
+        animator.SetBool("NewGame", true);
+        Invoke("Game", 1.3f);
+        Invoke("CameraChange", 4.3f);
     }
 
+
+    private void ToggleObjectVisibility()
+    {
+        isInvetoryVisible = !isInvetoryVisible; 
+
+        InventoryScreen.SetActive(isInvetoryVisible); 
+    }
+
+    private void ToggleUIVisibility()
+    {
+        isQuestUIVisible = !isQuestUIVisible; 
+
+        QuestUI.SetActive(isQuestUIVisible);
+    }
+
+
+    private void Game()
+    {
+       
+        
+        animator.SetBool("NewGame", false);
+    }
+
+    private void CameraChange()
+    { 
+    IntroCamera.gameObject.SetActive(false);
+    PlayerCamera.gameObject.SetActive(true);
+    }
 
     void FixedUpdate()
     {
 
-
+        
 
         CharacterController controller = GetComponent<CharacterController>();
 
@@ -46,7 +80,7 @@ public class ThirdPersonMove : MonoBehaviour
           
             inputDirection = transform.TransformDirection(inputDirection);
 
-           
+     
             moveDirection = inputDirection * speed;
 
             if (Input.GetButton("Jump"))
@@ -62,18 +96,18 @@ public class ThirdPersonMove : MonoBehaviour
         Vector3 cameraDirection = mainCamera.forward;
         cameraDirection.y = 0f;
 
-        
+    
         moveDirection = Vector3.ClampMagnitude(cameraDirection * Input.GetAxis("Vertical") + mainCamera.right * Input.GetAxis("Horizontal"), 1f) * speed;
 
        
         float cameraRotationY = mainCamera.rotation.eulerAngles.y;
 
-       
+     
         transform.rotation = Quaternion.Euler(0f, cameraRotationY, 0f);
 
         moveDirection.y -= gravity * Time.deltaTime;
         controller.Move(moveDirection * Time.deltaTime);
-        Debug.Log("Is grounded: " + controller.isGrounded + " " + "Jump: " + moveDirection.y);
+        
 
 
 
@@ -91,7 +125,18 @@ public class ThirdPersonMove : MonoBehaviour
     }
 
        void Update(){
-        
+
+
+        if (Input.GetKeyDown(KeyCode.R)) 
+        {
+            ToggleObjectVisibility(); 
+        }
+
+        if (Input.GetKeyDown(KeyCode.J)) 
+        {
+            ToggleUIVisibility(); 
+        }
+
         if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.7f && animator.GetCurrentAnimatorStateInfo(0).IsName("hit1"))
         {
             animator.SetBool("hit1", false);
@@ -108,10 +153,10 @@ public class ThirdPersonMove : MonoBehaviour
             noOfClicks = 0;
         }
 
-    
+     
         if (Time.time > nextFireTime)
         {
-            
+           
             if (Input.GetMouseButtonDown(0))
             {
                 OnClick();
@@ -126,7 +171,7 @@ public class ThirdPersonMove : MonoBehaviour
     public void OnClick()
     {   
         Collider collider = GameObject.Find("Sword_1").GetComponent<Collider>();
-       
+        
         lastClickedTime = Time.time;
         noOfClicks++; 
         
@@ -157,211 +202,3 @@ public class ThirdPersonMove : MonoBehaviour
 }
     
 
-
-
-
-/*
-public CharacterController controller;
-public Transform cam;
-public Animator animator;
-public float speed = 6;
-public float gravity = -9.81f;
-public float jumpHeight = 3f;
-public Transform groundCheck;
-public float groundDistance = 0.4f;
-public LayerMask groundMask;
-
-Vector3 velocity;
-bool isGrounded;
-bool isJumping;
-
-float turnSmoothVelocity;
-public float turnSmoothTime = 0.1f;
-
-void Update()
-{
-    isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask) ||
-         Physics.CheckSphere(groundCheck.position + new Vector3(0, -0.1f, 0), groundDistance, groundMask) ||
-         Physics.CheckSphere(groundCheck.position + new Vector3(0, -0.2f, 0), groundDistance, groundMask);
-
-
-    if (Physics.SphereCast(transform.position, controller.radius, Vector3.up, out RaycastHit hit, groundDistance, groundMask))
-    {
-        float distanceToGround = hit.distance;
-        if (distanceToGround < groundDistance)
-        {
-            isGrounded = true;
-            velocity.y = -2f;
-        }
-        else
-        {
-            isGrounded = false;
-        }
-    }
-    else
-    {
-        isGrounded = false;
-    }
-
-    if (controller.isGrounded && velocity.y < 0)
-    {
-        velocity.y = -2f;
-
-    }
-
-
-    if (Input.GetButtonDown("Jump") && controller.isGrounded)
-    {
-        isJumping = true;
-        animator.SetBool("Jump", true);
-        velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        Invoke("StopJumpAnimation", 0.1f);
-    }
-
-
-    if (!controller.isGrounded && isJumping && velocity.y > 0)
-    {
-        isJumping = false;
-        animator.SetBool("Land", true);
-    }
-
-    if (!isGrounded)
-    {
-        animator.SetBool("Land", true);
-    }
-
-    if (controller.isGrounded && animator.GetBool("Land"))
-    {
-
-        animator.SetBool("Land", false);
-    }
-
-    velocity.y += gravity * Time.deltaTime;
-    controller.Move(velocity * Time.deltaTime);
-
-    float horizontal = Input.GetAxisRaw("Horizontal");
-    float vertical = Input.GetAxisRaw("Vertical");
-    Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
-
-    if (direction.magnitude >= 0.1f)
-    {
-        float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
-        float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-        transform.rotation = Quaternion.Euler(0f, angle, 0f);
-
-        Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-        controller.Move(moveDir.normalized * speed * Time.deltaTime);
-
-        animator.SetBool("Walk", true);
-    }
-    else
-    {
-        animator.SetBool("Walk", false);
-    }
-
-
-    if (!controller.isGrounded && isJumping && velocity.y > 0)
-    {
-        isJumping = false;
-        animator.SetBool("Land", true);
-        Debug.Log("Landed, isJumping = " + isJumping);
-    }
-
-    if (!controller.isGrounded)
-    {
-        animator.SetBool("Land", true);
-        Debug.Log("Not grounded, isJumping = " + isJumping);
-    }
-
-    if (controller.isGrounded && animator.GetBool("Land"))
-    {
-        animator.SetBool("Land", false);
-        Debug.Log("Grounded, isJumping = " + isJumping);
-    }
-
-}
-
-
-
-void StopJumpAnimation()
-{
-    animator.SetBool("Jump", false);
-}
-
-
-*/
-
-/*	public CharacterController controller;
-	public float speed = 6f;
-	public float turnShoothTime = 0.1f;
-	float turnSmoothVelocity;
-
-	Update is called once per frame
-	void Update()
-	{
-		float horizontal = Input.GetAxisRaw("Horizontal");
-		float vertical = Input.GetAxisRaw("Vertical");
-		Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
-
-		if (direction.magnitude >= 0.1f)
-		{
-			float targetAngle = Mathf.Atan2(direction.x, direction.y);
-			float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnShoothTime);
-			transform.rotation = Quaternion.Euler(0f, angle, 0f);
-			controller.Move(direction * speed * Time.deltaTime);
-		}
-	}
-}*/
-
-
-
-
-
-
-
-/*public float moveSpeed = 5f; // скорость движения персонажа
-public Animator animator;
-private Rigidbody rb;
-float turnSmoothVelocity;
-float turnSmoothTime = 0.1f;
-
-void Start()
-{
-    rb = GetComponent<Rigidbody>();
-}
-
-void FixedUpdate()
-{
-    float moveHorizontal = Input.GetAxis("Horizontal"); // получаем значение оси X (A, D или ←, →)
-    float moveVertical = Input.GetAxis("Vertical"); // получаем значение оси Z (W, S или ↑, ↓)
-
-    Vector3 moveDirection = new Vector3(moveHorizontal, 0f, moveVertical).normalized;
-    rb.MovePosition(transform.position + moveDirection * moveSpeed * Time.deltaTime);
-
-
-    if (moveDirection.magnitude >= 0.1f)
-    {
-        float targetAngle = Mathf.Atan2(moveHorizontal, moveVertical) * Mathf.Rad2Deg;
-        float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-        transform.rotation = Quaternion.Euler(0f, angle, 0f);
-
-    }
-
-
-
-
-
-
-
-
-    if (moveDirection.magnitude > 0f) // если персонаж движется, переключаем анимации
-    {
-        animator.SetBool("Walk", true);
-    }
-    else
-    {
-        animator.SetBool("Walk", false);
-    }
-
-
-}*/
